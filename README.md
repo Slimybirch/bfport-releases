@@ -18,13 +18,14 @@ These builds are tuned for small ARM devices: the framebuffer display path, lowe
 
 Releases are named `YYYYMMDD-<commit>`. Each is built automatically from the handheld branch, which tracks OpenBF upstream.
 
-## 1. Bake your data (PC, once per data change)
-The data file is made on a PC (Windows or Linux) from your disc images. It takes a while the first time.
+## 1. Bake your data (computer, once per data change)
+The data file is made on a computer (Windows, Linux or macOS) from your disc images. It takes a while the first time.
 
 **Requirements**
 - Python 3, Git, ffmpeg on your `PATH`, and Rust (https://rustup.rs)
 - Windows: the Visual Studio C++ Build Tools (rustup offers them) and Git for Windows (the bake runs in its bash)
 - Linux: the ALSA and udev development libraries (Debian/Ubuntu: `libasound2-dev libudev-dev`)
+- macOS: the Xcode Command Line Tools (`xcode-select --install`) and ffmpeg (`brew install ffmpeg`); use `python3` for the commands below. The bake and the game build on macOS (checked on every handheld build), but a full Mac bake hasn't been tried yet: if it stops, open an issue with the error.
 
 **Steps**
 1. Get the OpenBF source at the release's upstream commit (the `upstream_commit` in its `manifest.json`):
