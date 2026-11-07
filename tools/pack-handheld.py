@@ -25,10 +25,12 @@ handheld, never upload or share it.
 """
 import argparse
 import os
+import shutil
 import struct
 import sys
 
 MAGIC = b"OPENBFPK"
+LEN_MASK = (1 << 62) - 1
 FOOTER = 32
 CHUNK = 8 << 20
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -79,7 +81,19 @@ def main():
         f.seek(size - FOOTER)
         foot = f.read(FOOTER)
         if foot[:8] != MAGIC:
-            sys.exit(f"{a.src} carries no pack: run scripts/pack.py first")
+            # A build too big for one file: pack.py already wrote the data as
+            # openbf.pak beside the executable, in the very format wanted here.
+            beside = os.path.join(os.path.dirname(os.path.abspath(a.src)), "openbf.pak")
+            if not os.path.isfile(beside):
+                sys.exit(f"{a.src} carries no pack: run scripts/pack.py first")
+            if os.path.abspath(beside) != os.path.abspath(a.out):
+                os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
+                shutil.copyfile(beside, a.out + ".new")
+                os.replace(a.out + ".new", a.out)
+            write_stamp(a.out, a.assume_current)
+            gib = os.path.getsize(a.out) / (1 << 30)
+            print(f"wrote {a.out} (pack.py's own openbf.pak, {gib:.2f} GiB)")
+            return
         start, at, length = struct.unpack("<QQQ", foot[8:])
         if at + length + FOOTER != size or start > at:
             sys.exit(f"{a.src}: footer does not match the file size")
@@ -94,7 +108,9 @@ def main():
             (plen,) = struct.unpack_from("<H", index, i)
             name = index[i + 2 : i + 2 + plen]
             off, n = struct.unpack_from("<QQ", index, i + 2 + plen)
-            if off < start or off + n > at:
+            # Bits 63 and 62 of a length flag a compressed body (zstd or
+            # Deflate); the bytes it spans are the low bits.
+            if off < start or off + (n & LEN_MASK) > at:
                 sys.exit(f"{a.src}: entry {name!r} lies outside the pack")
             out_index += struct.pack("<H", plen) + name + struct.pack("<QQ", off - start, n)
             i += 2 + plen + 16
