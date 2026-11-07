@@ -26,12 +26,19 @@ def tree_id():
 
 
 def bake_is_current():
-    """True / False: whether pack.py's last bake here was made from this tree
-    (its own stamps, full inputs); None when it left no stamps."""
+    """True / False: whether pack.py's last bake here was made from this tree,
+    by its own stamps; None when that cannot be told. pack.py now folds the
+    inputs it chose (disc paths, options) into its stamps, which only it knows,
+    so a stamp that does not match the bare source hash proves nothing: then
+    the answer is None, not False."""
     if not os.path.isfile(pack.BAKE_STAMP):
         return None
-    return pack.stale(pack.BAKE_STAMP, pack.BAKE_INPUTS) is None and \
-        pack.stale(pack.MISSION_STAMP, pack.MISSION_INPUTS) is None
+    try:
+        bare = pack.stale(pack.BAKE_STAMP, pack.BAKE_INPUTS) is None and \
+            pack.stale(pack.MISSION_STAMP, pack.MISSION_INPUTS) is None
+    except TypeError:
+        return None
+    return True if bare else None
 
 
 if __name__ == "__main__":

@@ -55,7 +55,8 @@ def write_stamp(out, assume_current=False):
                  "run scripts/pack.py first (it re-bakes), then this script again\n"
                  "(or --assume-current when only Cargo.toml / Cargo.lock changed)")
     if current is None:
-        print("note: pack.py left no bake stamps in extracted/; assuming the bake matches this checkout")
+        print("note: the bake in extracted/ is taken to match this checkout; if you pulled new code\n"
+              "      since running scripts/pack.py, run it again first (it re-bakes only when needed)")
     made = bake_id.tree_id()
     os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
     with open(out + ".bake", "w", newline="\n") as f:
